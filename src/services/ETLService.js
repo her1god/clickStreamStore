@@ -39,6 +39,7 @@ function processLogData(data, aggregatedData, dailyData, visitorData) {
     }
 
     // Security/Integrity Check: Ensure productId is a number
+    //test
     if (!data.productId || isNaN(parseInt(data.productId))) return;
 
     if (!aggregatedData[data.productId]) {
