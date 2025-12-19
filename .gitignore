@@ -2,5 +2,5 @@ node_modules
 .env
 temp_logs
 .DS_Store
-
+readmeforartikel.md
 .env2
