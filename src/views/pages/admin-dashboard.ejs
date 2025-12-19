@@ -93,7 +93,16 @@
                                         <%= v.session_id.substring(0, 12) %>...
                                     </td>
                                     <td class="py-3 text-right">
-                                        <%= new Date(v.last_seen).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) %>
+                                        <% 
+                                            // Manual Shift: UTC + 7 Hours
+                                            const d = new Date(new Date(v.last_seen).getTime() + (7 * 3600000));
+                                            // 1. Time (HH:mm) - using ISO to grab the shifted time safely
+                                            const timeStr = d.toISOString().substring(11, 16);
+                                            // 2. Day & Date (Indonesian) - using UTC timezone because 'd' is already shifted
+                                            const dayStr = d.toLocaleDateString('id-ID', { timeZone: 'UTC', weekday: 'long' });
+                                            const dateStr = d.toLocaleDateString('id-ID', { timeZone: 'UTC', day: 'numeric', month: 'long', year: 'numeric' });
+                                        %>
+                                        <%= timeStr %> WIB / <%= dayStr %> / <%= dateStr %>
                                     </td>
                                 </tr>
                                 <% }) %>
