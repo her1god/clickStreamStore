@@ -27,6 +27,8 @@ app.use(session({
 }));
 
 // Custom Middleware
+app.use(require('./src/middleware').limiter);
+app.use(require('./src/middleware').blockBots);
 app.use(sessionTracker);
 
 // Routes
