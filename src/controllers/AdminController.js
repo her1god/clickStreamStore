@@ -9,11 +9,28 @@ exports.getLogin = (req, res) => {
 
 exports.postLogin = (req, res) => {
     const { username, password } = req.body;
-    if (username === process.env.ADMIN_USER && password === process.env.ADMIN_PASS) {
+    
+    // Security Patch: Prevent access if Env Vars are missing or if input is undefined
+    const validUser = process.env.ADMIN_USER;
+    const validPass = process.env.ADMIN_PASS;
+
+    if (!validUser || !validPass) {
+        console.error("SECURITY ALERT: Admin credentials are not set in environment variables!");
+        return res.render('pages/admin-login', { title: 'Admin Login', error: 'Server Misconfiguration (Credentials missing)' });
+    }
+
+    if (username === validUser && password === validPass) {
         req.session.isAdmin = true;
         return res.redirect('/admin/dashboard');
     }
     res.render('pages/admin-login', { title: 'Admin Login', error: 'Invalid credentials' });
+};
+
+exports.logout = (req, res) => {
+    req.session.destroy(err => {
+        if (err) console.error("Logout Error:", err);
+        res.redirect('/admin/login');
+    });
 };
 
 const VisitorModel = require('../models/VisitorModel');

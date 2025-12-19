@@ -17,6 +17,7 @@ router.post('/api/log', StoreController.logEvent);
 // Admin Auth Routes
 router.get('/admin/login', AdminController.getLogin);
 router.post('/admin/login', AdminController.postLogin);
+router.get('/admin/logout', AdminController.logout);
 
 // Admin Secure Routes
 router.use('/admin', middleware.isAdmin);
