@@ -3,6 +3,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const AnalyticsModel = require('../models/AnalyticsModel');
 const DailyAnalyticsModel = require('../models/DailyAnalyticsModel');
+const VisitorModel = require('../models/VisitorModel');
 
 const TEMP_LOGS_DIR = path.join(__dirname, '../../temp_logs');
 const ARCHIVE_DIR = path.join(__dirname, '../../temp_logs/archive');
@@ -28,7 +29,15 @@ async function streamToString(readableStream) {
 }
 
 // Unified Aggregation Logic
-function processLogData(data, aggregatedData, dailyData) {
+function processLogData(data, aggregatedData, dailyData, visitorData) {
+    // Visitor Tracking
+    if (data.sessionId) {
+        visitorData[data.sessionId] = {
+            userAgent: data.userAgent || 'Unknown',
+            timestamp: data.timestamp
+        };
+    }
+
     if (!data.productId) return;
 
     if (!aggregatedData[data.productId]) {
@@ -50,17 +59,11 @@ function processLogData(data, aggregatedData, dailyData) {
 }
 
 class ETLService {
-    /*
-     * Penjelasan Alur ETL (Extract, Transform, Load):
-     * 1. Extract: Membaca raw logs dari Azure Blob Storage atau Folder Temp.
-     * 2. Transform: Mengelompokkan data (Aggregate) misal menghitung jumlah view per produk.
-     * 3. Load: Menyimpan hasil hitungan bersih ke tabel 'product_analytics' di MySQL untuk Dashboard.
-     * 4. Cleanup: Mengarsipkan file log agar tidak diproses ganda.
-     */
     static async runETLJob() {
         console.log("Starting ETL Job...");
         const aggregatedData = {}; // { productId: { views, carts, purchases } }
         const dailyData = {}; // { "YYYY-MM-DD-HH": count }
+        const visitorData = {}; // { sessionId: { userAgent, timestamp } }
         const filesToArchive = []; 
 
         // 1. Azure Blob Source
@@ -75,7 +78,7 @@ class ETLService {
                             const downloadedContent = (await streamToString(downloadBlockBlobResponse.readableStreamBody));
                             
                             const data = JSON.parse(downloadedContent);
-                            processLogData(data, aggregatedData, dailyData);
+                            processLogData(data, aggregatedData, dailyData, visitorData);
                             
                             filesToArchive.push({ type: 'azure', name: blob.name });
                         } catch (parseErr) {
@@ -96,7 +99,7 @@ class ETLService {
                     try {
                         const content = await fs.readFile(path.join(TEMP_LOGS_DIR, file), 'utf8');
                         const data = JSON.parse(content);
-                        processLogData(data, aggregatedData, dailyData);
+                        processLogData(data, aggregatedData, dailyData, visitorData);
                         
                         filesToArchive.push({ type: 'local', name: file });
                     } catch (parseErr) {
@@ -130,14 +133,26 @@ class ETLService {
             }
         }
 
-        // 5. Cleanup
+        // 5. Load Visitor Analytics
+        const sessionIds = Object.keys(visitorData);
+        if (sessionIds.length > 0) {
+             console.log(`Tracking ${sessionIds.length} unique sessions.`);
+             for (const sid of sessionIds) {
+                 await VisitorModel.upsertSession(sid, visitorData[sid].userAgent, visitorData[sid].timestamp);
+             }
+        }
+
+        // 6. Cleanup
         for (const fileItem of filesToArchive) {
             if (fileItem.type === 'azure') {
                  try {
                      const sourceClient = containerClient.getBlockBlobClient(fileItem.name);
                      await sourceClient.delete(); 
                  } catch (e) {
-                     console.error("Failed to archive Azure blob:", fileItem.name, e);
+                     // Ignore if already deleted/missing (Race condition or previous run)
+                     if (e.code !== 'BlobNotFound') {
+                         console.error("Failed to archive Azure blob:", fileItem.name, e.message);
+                     }
                  }
             } else {
                 // Local move
@@ -147,7 +162,7 @@ class ETLService {
             }
         }
         console.log("ETL Job Completed.");
-        return { processed: updates.length, archived: filesToArchive.length };
+        return { processed: updates.length, archived: filesToArchive.length, sessions: sessionIds.length };
     }
 }
 

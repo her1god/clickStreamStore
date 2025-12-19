@@ -17,6 +17,7 @@ exports.sessionTracker = async (req, res, next) => {
     req.logEvent = async (eventName, additionalData = {}) => {
         const payload = {
             sessionId: req.session.guestId,
+            userAgent: req.headers['user-agent'],
             event: eventName,
             ...additionalData
         };

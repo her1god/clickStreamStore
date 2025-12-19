@@ -16,20 +16,29 @@ exports.postLogin = (req, res) => {
     res.render('pages/admin-login', { title: 'Admin Login', error: 'Invalid credentials' });
 };
 
+const VisitorModel = require('../models/VisitorModel');
+
 exports.getDashboard = async (req, res) => {
     try {
         const topProducts = await AnalyticsModel.getTopProducts();
         let dailyTrends = [];
+        let recentVisitors = [];
+        let totalVisitors = 0;
+
         try {
             dailyTrends = await DailyAnalyticsModel.getRecentData();
+            recentVisitors = await VisitorModel.getRecentVisitors();
+            totalVisitors = await VisitorModel.getTotalUniqueVisitors();
         } catch (e) {
-            console.error("Daily Analytics Error:", e);
+            console.error("Analytics Data Fetch Error:", e);
         }
         
         res.render('pages/admin-dashboard', { 
             title: 'Admin Dashboard', 
             topProducts,
-            dailyTrends 
+            dailyTrends,
+            recentVisitors,
+            totalVisitors
         });
     } catch (err) {
         console.error(err);

@@ -26,10 +26,12 @@ async function createDatabaseIfNotExists() {
         const ProductModel = require('../src/models/ProductModel');
         const AnalyticsModel = require('../src/models/AnalyticsModel');
         const DailyAnalyticsModel = require('../src/models/DailyAnalyticsModel');
+        const VisitorModel = require('../src/models/VisitorModel');
 
         await ProductModel.createTable();
         await AnalyticsModel.createTable();
         await DailyAnalyticsModel.createTable();
+        await VisitorModel.createTable();
         
         console.log("Tables created successfully.");
 

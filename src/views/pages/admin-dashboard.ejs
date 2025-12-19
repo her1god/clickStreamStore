@@ -26,6 +26,10 @@
                 <div class="text-3xl font-bold text-gray-900"><%= topProducts.length %></div>
             </div>
              <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">Unique Visitors</div>
+                <div class="text-3xl font-bold text-purple-600"><%= totalVisitors || 0 %></div>
+            </div>
+             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                 <div class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">ETL Status</div>
                 <div class="text-lg font-semibold text-green-600">Active</div>
             </div>
@@ -69,39 +73,72 @@
             </div>
         </div>
 
-        <!-- Top Products Table -->
-        <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-            <!-- Table content similar to before -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <!-- Recent Visitors Table -->
+            <div class="lg:col-span-1 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Recent Visitors</h3>
+                 <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="text-gray-400 border-b border-gray-100 text-xs uppercase">
+                                <th class="pb-3 font-medium">Session ID (Who)</th>
+                                <th class="pb-3 font-medium text-right">Last Seen</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm text-gray-600">
+                            <% if (recentVisitors && recentVisitors.length > 0) { %>
+                                <% recentVisitors.forEach(v => { %>
+                                <tr class="border-b border-gray-50 last:border-0">
+                                    <td class="py-3 font-mono text-xs text-blue-600 truncate max-w-[100px]" title="<%= v.user_agent %>">
+                                        <%= v.session_id.substring(0, 12) %>...
+                                    </td>
+                                    <td class="py-3 text-right">
+                                        <%= new Date(v.last_seen).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) %>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr><td colspan="2" class="py-4 text-center text-gray-400 text-xs">No active visitors.</td></tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="text-gray-400 border-b border-gray-100">
-                            <th class="pb-3 font-medium">Product Name</th>
-                            <th class="pb-3 font-medium">Price</th>
-                            <th class="pb-3 font-medium">Views</th>
-                            <th class="pb-3 font-medium">Carts</th>
-                            <th class="pb-3 font-medium">Purchases</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-gray-600">
-                        <% if (topProducts && topProducts.length > 0) { %>
-                            <% topProducts.forEach(product => { %>
-                            <tr class="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition">
-                                <td class="py-4 font-medium text-gray-900"><%= product.name %></td>
-                                <td class="py-4">Rp <%= product.price.toLocaleString('id-ID') %></td>
-                                <td class="py-4 font-bold text-blue-600"><%= product.view_count %></td>
-                                <td class="py-4 font-bold text-yellow-600"><%= product.cart_count %></td>
-                                <td class="py-4 font-bold text-green-600"><%= product.purchase_count %></td>
+            <!-- Top Products Table -->
+            <div class="lg:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Performance Metrics</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="text-gray-400 border-b border-gray-100">
+                                <th class="pb-3 font-medium">Product Name</th>
+                                <th class="pb-3 font-medium">Price</th>
+                                <th class="pb-3 font-medium">Views</th>
+                                <th class="pb-3 font-medium">Carts</th>
+                                <th class="pb-3 font-medium">Purchases</th>
                             </tr>
-                            <% }) %>
-                        <% } else { %>
-                            <tr>
-                                <td colspan="5" class="py-8 text-center text-gray-400">No analytics data available yet. Run ETL Job.</td>
-                            </tr>
-                        <% } %>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody class="text-gray-600">
+                            <% if (topProducts && topProducts.length > 0) { %>
+                                <% topProducts.forEach(product => { %>
+                                <tr class="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition">
+                                    <td class="py-4 font-medium text-gray-900"><%= product.name %></td>
+                                    <td class="py-4">Rp <%= product.price.toLocaleString('id-ID') %></td>
+                                    <td class="py-4 font-bold text-blue-600"><%= product.view_count %></td>
+                                    <td class="py-4 font-bold text-yellow-600"><%= product.cart_count %></td>
+                                    <td class="py-4 font-bold text-green-600"><%= product.purchase_count %></td>
+                                    
+                                </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="5" class="py-8 text-center text-gray-400">No analytics data available yet. Run ETL Job.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </main>
