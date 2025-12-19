@@ -38,7 +38,8 @@ function processLogData(data, aggregatedData, dailyData, visitorData) {
         };
     }
 
-    if (!data.productId) return;
+    // Security/Integrity Check: Ensure productId is a number
+    if (!data.productId || isNaN(parseInt(data.productId))) return;
 
     if (!aggregatedData[data.productId]) {
         aggregatedData[data.productId] = { views: 0, carts: 0, purchases: 0 };
